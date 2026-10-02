@@ -1,0 +1,22 @@
+# env / secrets
+.env
+# opencode.json locale (contiene il token ntfy); usa examples/opencode.mcp.json come template
+opencode.json
+
+# Node
+node_modules/
+dist/
+*.log
+
+# Android / Gradle
+.gradle/
+.kotlin/
+**/build/
+local.properties
+*.iml
+.idea/
+captures/
+.cxx/
+
+# OS
+.DS_Store

@@ -1,0 +1,25 @@
+{
+  "name": "android-companion-mcp",
+  "version": "0.1.0",
+  "description": "MCP stdio server publishing companion events to a self-hosted ntfy relay",
+  "type": "module",
+  "bin": {
+    "android-companion-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "smoke": "tsx scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

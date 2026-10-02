@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "android_companion": {
+      "type": "local",
+      "command": ["node", "/ABSOLUTE/PATH/TO/android-companion/mcp-server/dist/index.js"],
+      "enabled": true,
+      "environment": {
+        "COMPANION_INSTANCE": "default",
+        "COMPANION_LABEL": "OpenCode",
+        "COMPANION_COLOR": "#4F9CF9",
+        "NTFY_URL": "http://localhost:8080",
+        "NTFY_TOPIC": "companion-CHANGE-ME-to-a-long-random-string",
+        "NTFY_TOKEN": ""
+      },
+      "timeout": 15000
+    }
+  }
+}

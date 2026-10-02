@@ -1,0 +1,25 @@
+services:
+  ntfy:
+    image: binwiederhier/ntfy
+    container_name: android-companion-ntfy
+    command: serve
+    environment:
+      - TZ=UTC
+      - NTFY_BASE_URL=${NTFY_BASE_URL:-http://localhost:8080}
+      - NTFY_LISTEN_HTTP=:80
+      - NTFY_CACHE_FILE=/var/cache/ntfy/cache.db
+      - NTFY_CACHE_DURATION=${NTFY_CACHE_DURATION:-12h}
+      - NTFY_ATTACHMENT_CACHE_DIR=/var/cache/ntfy/attachments
+      - NTFY_BEHIND_PROXY=${NTFY_BEHIND_PROXY:-false}
+      - NTFY_AUTH_FILE=/var/lib/ntfy/user.db
+      - NTFY_AUTH_DEFAULT_ACCESS=${NTFY_AUTH_DEFAULT_ACCESS:-read-write}
+    volumes:
+      - ntfy-cache:/var/cache/ntfy
+      - ntfy-auth:/var/lib/ntfy
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  ntfy-cache:
+  ntfy-auth:
