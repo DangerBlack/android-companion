@@ -3,28 +3,18 @@ package dev.danger.companion.sound
 import android.app.NotificationManager
 import android.content.Context
 import android.media.AudioManager
-import android.media.RingtoneManager
-import android.media.ToneGenerator
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
+import dev.danger.companion.Emotion
 
 object SoundPlayer {
 
     private const val TAG = "SoundPlayer"
 
-    fun play(context: Context, sound: String) {
+    fun play(context: Context, sound: String, emotion: Emotion = Emotion.NEUTRAL) {
         val mode = sound.trim().lowercase()
         if (mode.isEmpty() || mode == "none") return
-
-        val audio = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return
-        when (audio.ringerMode) {
-            AudioManager.RINGER_MODE_SILENT -> return
-            AudioManager.RINGER_MODE_VIBRATE -> {
-                vibrate(context)
-                return
-            }
-        }
 
         if (isDoNotDisturbActive(context)) {
             vibrate(context)
@@ -32,12 +22,18 @@ object SoundPlayer {
         }
 
         when (mode) {
-            "soft" -> playSoft(context)
             "alert" -> {
-                playAlert(context)
+                CreatureSound.play(context, emotion, loud = true)
                 vibrate(context)
             }
-            else -> playSoft(context)
+            else -> {
+                val audio = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+                if (audio != null && audio.ringerMode != AudioManager.RINGER_MODE_NORMAL) {
+                    vibrate(context)
+                } else {
+                    CreatureSound.play(context, emotion, loud = false)
+                }
+            }
         }
     }
 
@@ -47,26 +43,6 @@ object SoundPlayer {
             NotificationManager.INTERRUPTION_FILTER_ALL,
             NotificationManager.INTERRUPTION_FILTER_UNKNOWN -> false
             else -> true
-        }
-    }
-
-    private fun playSoft(context: Context) {
-        try {
-            val tone = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 70)
-            tone.startTone(ToneGenerator.TONE_PROP_BEEP, 180)
-            tone.release()
-        } catch (e: Exception) {
-            Log.w(TAG, "soft tone failed", e)
-        }
-    }
-
-    private fun playAlert(context: Context) {
-        try {
-            val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            RingtoneManager.getRingtone(context, uri)?.play()
-        } catch (e: Exception) {
-            Log.w(TAG, "alert ringtone failed", e)
         }
     }
 

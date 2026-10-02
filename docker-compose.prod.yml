@@ -1,0 +1,46 @@
+services:
+  relay:
+    image: ${RELAY_IMAGE:-dangerblack/android-companion-relay:latest}
+    container_name: companion-relay
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ:-UTC}
+      - NTFY_BASE_URL=${NTFY_BASE_URL}
+      - NTFY_BEHIND_PROXY=${NTFY_BEHIND_PROXY:-true}
+      - NTFY_LISTEN_HTTP=:80
+      - NTFY_CACHE_FILE=/var/cache/ntfy/cache.db
+      - NTFY_CACHE_DURATION=${NTFY_CACHE_DURATION:-12h}
+      - NTFY_ATTACHMENT_CACHE_DIR=/var/cache/ntfy/attachments
+      - NTFY_AUTH_FILE=/var/lib/ntfy/user.db
+      - NTFY_AUTH_DEFAULT_ACCESS=${NTFY_AUTH_DEFAULT_ACCESS:-deny-all}
+      - NTFY_USER=${NTFY_USER:-companion}
+      - NTFY_PASSWORD=${NTFY_PASSWORD}
+      - NTFY_USER_ROLE=${NTFY_USER_ROLE:-admin}
+      - NTFY_TOPIC=${NTFY_TOPIC}
+    volumes:
+      - relay-cache:/var/cache/ntfy
+      - relay-auth:/var/lib/ntfy
+    expose:
+      - "80"
+
+  caddy:
+    image: caddy:2
+    container_name: companion-caddy
+    restart: unless-stopped
+    depends_on:
+      - relay
+    environment:
+      - DOMAIN=${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  relay-cache:
+  relay-auth:
+  caddy-data:
+  caddy-config:

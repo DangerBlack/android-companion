@@ -33,7 +33,8 @@ import androidx.glance.unit.ColorProvider
 import dev.danger.companion.CompanionState
 import dev.danger.companion.CompanionStore
 import dev.danger.companion.SettingsStore
-import dev.danger.companion.face.EyeRenderer
+import dev.danger.companion.face.BloubRenderer
+import dev.danger.companion.face.FaceAnimBus
 
 class FaceWidget : GlanceAppWidget() {
 
@@ -108,7 +109,7 @@ class FaceWidget : GlanceAppWidget() {
         val density = context.resources.displayMetrics.density
         val widthPx = (size.width.value * density).toInt().coerceAtLeast(48)
         val heightPx = (size.height.value * density).toInt().coerceAtLeast(48)
-        val bitmap = EyeRenderer.render(state, widthPx, heightPx)
+        val bitmap = BloubRenderer.render(state, widthPx, heightPx, FaceAnimBus.current)
         Image(
             provider = BitmapImageProvider(bitmap),
             contentDescription = state.instanceLabel,

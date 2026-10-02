@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env
+opencode.json
+node_modules
+**/node_modules
+**/build
+.gradle
+.kotlin
+android
+*.apk
+.idea
+*.iml
+captures
+.cxx
+third_party

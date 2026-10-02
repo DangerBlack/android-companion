@@ -152,7 +152,7 @@ class CompanionStreamService : Service() {
             ttlMs = ttlMs,
         )
         withContext(Dispatchers.Main) {
-            SoundPlayer.play(this@CompanionStreamService, sound)
+            SoundPlayer.play(this@CompanionStreamService, sound, emotion)
         }
     }
 

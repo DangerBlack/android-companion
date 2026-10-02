@@ -39,7 +39,7 @@ class CompanionPushReceiver : BroadcastReceiver() {
                     color = color,
                     ttlMs = ttlMs,
                 )
-                SoundPlayer.play(appContext, sound)
+                SoundPlayer.play(appContext, sound, emotion)
             } finally {
                 pendingResult.finish()
             }

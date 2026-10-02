@@ -34,7 +34,7 @@ data class CompanionState(
 
         fun defaultSleepy(): CompanionState = CompanionState(
             emotion = Emotion.SLEEPY,
-            text = "zzz",
+            text = null,
             instanceId = "default",
             instanceLabel = "Companion",
             colorArgb = DEFAULT_COLOR,

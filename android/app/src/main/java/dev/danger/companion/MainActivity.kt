@@ -46,7 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.glance.appwidget.updateAll
-import dev.danger.companion.face.EyeRenderer
+import dev.danger.companion.face.BloubRenderer
 import dev.danger.companion.push.CompanionStreamService
 import dev.danger.companion.widget.FaceWidget
 import kotlinx.coroutines.launch
@@ -156,7 +156,7 @@ private fun CompanionScreen() {
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
-                    bitmap = EyeRenderer.render(state, 200, 200).asImageBitmap(),
+                    bitmap = BloubRenderer.render(state, 200, 200).asImageBitmap(),
                     contentDescription = "Current face preview",
                     modifier = Modifier.size(200.dp),
                 )
@@ -247,7 +247,7 @@ private fun CompanionScreen() {
             ) {
                 Text(text = "Widget background", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = "Scegli lo sfondo del widget (trasparente incluso).",
+                    text = "Choose the widget background (transparent included).",
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
