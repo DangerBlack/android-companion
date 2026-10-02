@@ -41,23 +41,37 @@ class CompanionStreamService : Service() {
     @Volatile
     private var connection: HttpURLConnection? = null
 
+    @Volatile
+    private var reconnectRequested = false
+
     private var streamJob: Job? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) {
-            stopListening()
-            return START_NOT_STICKY
+        when (intent?.action) {
+            ACTION_STOP -> {
+                stopListening()
+                return START_NOT_STICKY
+            }
+            ACTION_RESTART -> {
+                if (running) {
+                    reconnectRequested = true
+                    connection?.disconnect()
+                } else {
+                    reconnectRequested = false
+                    running = true
+                    streamJob = scope.launch { listenLoop() }
+                }
+            }
+            else -> if (!running) {
+                running = true
+                streamJob = scope.launch { listenLoop() }
+            }
         }
 
         createChannel()
         startForegroundCompat(buildNotification("Companion attivo", "Avvio in ascolto…"))
-
-        if (!running) {
-            running = true
-            streamJob = scope.launch { listenLoop() }
-        }
         return START_STICKY
     }
 
@@ -83,6 +97,10 @@ class CompanionStreamService : Service() {
             }
 
             if (!running) break
+            if (reconnectRequested) {
+                reconnectRequested = false
+                continue
+            }
             delay(backoffMs)
             backoffMs = (backoffMs * 2).coerceAtMost(MAX_BACKOFF_MS)
         }
@@ -107,7 +125,7 @@ class CompanionStreamService : Service() {
             if (code !in 200..299) return
 
             val reader = conn.inputStream.bufferedReader()
-            while (running) {
+            while (running && !reconnectRequested) {
                 val line = reader.readLine() ?: break
                 handleLine(line)
             }
@@ -218,6 +236,7 @@ class CompanionStreamService : Service() {
         const val CHANNEL_ID = "companion_stream"
         const val NOTIF_ID = 1001
         const val ACTION_STOP = "dev.danger.companion.SERVICE_STOP"
+        const val ACTION_RESTART = "dev.danger.companion.SERVICE_RESTART"
 
         private const val TAG = "CompanionStream"
         private const val INITIAL_BACKOFF_MS = 2_000L
@@ -236,6 +255,15 @@ class CompanionStreamService : Service() {
         fun stop(context: Context) {
             val intent = Intent(context, CompanionStreamService::class.java).setAction(ACTION_STOP)
             context.startService(intent)
+        }
+
+        fun restart(context: Context) {
+            val intent = Intent(context, CompanionStreamService::class.java).setAction(ACTION_RESTART)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
         }
     }
 }

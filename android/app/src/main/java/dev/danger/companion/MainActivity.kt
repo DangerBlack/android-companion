@@ -215,8 +215,12 @@ private fun CompanionScreen() {
                                     topic = topicInput.orEmpty(),
                                     token = tokenInput.orEmpty(),
                                     enabled = settings?.enabled == true,
+                                    bgColor = settings?.bgColor ?: SettingsStore.DEFAULT_BG_COLOR,
                                 ),
                             )
+                            if (settings?.enabled == true) {
+                                CompanionStreamService.restart(context)
+                            }
                         }
                     },
                 ) {
