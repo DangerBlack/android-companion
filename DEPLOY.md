@@ -2,18 +2,21 @@
 
 This guide puts the relay on a server and shows how to distribute the images on Docker Hub.
 
-Two images are provided:
+Two images are provided, published at **`dangerblack/android-companion`** (Docker Hub):
 
-| Image | Dockerfile | Purpose |
-|---|---|---|
-| `android-companion-relay` | `docker/relay/Dockerfile` | ntfy + startup user/topic bootstrap |
-| `android-companion-mcp` | `docker/mcp/Dockerfile` | the stdio MCP server (run by OpenCode) |
+| Tag | Dockerfile | Purpose | Where it runs |
+|---|---|---|---|
+| `:relay` | `docker/relay/Dockerfile` | ntfy relay + startup user/topic bootstrap | **on the server** (must be reachable by the phone) |
+| `:mcp` | `docker/mcp/Dockerfile` | the stdio MCP server spawned by OpenCode | wherever **OpenCode** runs; **OPTIONAL** (only if you don't want Node installed locally) |
+
+Only `:relay` needs a server. `:mcp` is a packaging convenience — OpenCode can either run the
+MCP server from source (`node mcp-server/dist/index.js`) or spawn this container.
 
 ---
 
 ## 1. Build and push to Docker Hub
 
-Replace `YOURUSER` with your Docker Hub account.
+Published namespace: **`dangerblack/android-companion`** with tags `:relay` and `:mcp`.
 
 All base images (`binwiederhier/ntfy`, `node:22-alpine`, `caddy:2`) are **multi-arch with
 `linux/arm64`**, so the images run natively on a Raspberry Pi 5 (arm64). On the Pi you can
@@ -23,13 +26,11 @@ manifest list.
 ### Single-arch (built on the target machine)
 
 ```bash
-docker build -f docker/relay/Dockerfile -t YOURUSER/android-companion-relay:0.1.0 -t YOURUSER/android-companion-relay:latest .
-docker build -f docker/mcp/Dockerfile   -t YOURUSER/android-companion-mcp:0.1.0   -t YOURUSER/android-companion-mcp:latest   .
+docker build -f docker/relay/Dockerfile -t dangerblack/android-companion:relay .
+docker build -f docker/mcp/Dockerfile   -t dangerblack/android-companion:mcp .
 docker login
-docker push YOURUSER/android-companion-relay:0.1.0
-docker push YOURUSER/android-companion-relay:latest
-docker push YOURUSER/android-companion-mcp:0.1.0
-docker push YOURUSER/android-companion-mcp:latest
+docker push dangerblack/android-companion:relay
+docker push dangerblack/android-companion:mcp
 ```
 
 ### Multi-arch (amd64 + arm64, recommended)
@@ -38,11 +39,9 @@ docker push YOURUSER/android-companion-mcp:latest
 docker buildx create --use --name companion 2>/dev/null || docker buildx use companion
 docker login
 docker buildx build --platform linux/amd64,linux/arm64 \
-  -f docker/relay/Dockerfile \
-  -t YOURUSER/android-companion-relay:0.1.0 -t YOURUSER/android-companion-relay:latest --push .
+  -f docker/relay/Dockerfile -t dangerblack/android-companion:relay --push .
 docker buildx build --platform linux/amd64,linux/arm64 \
-  -f docker/mcp/Dockerfile \
-  -t YOURUSER/android-companion-mcp:0.1.0 -t YOURUSER/android-companion-mcp:latest --push .
+  -f docker/mcp/Dockerfile -t dangerblack/android-companion:mcp --push .
 ```
 
 The Pi pulls the `arm64` variant automatically; an x86 server pulls `amd64`.
@@ -130,7 +129,7 @@ OpenCode can spawn a container; `-i` keeps stdin open for the MCP stdio transpor
         "-e", "COMPANION_INSTANCE=work",
         "-e", "COMPANION_LABEL=Work",
         "-e", "COMPANION_COLOR=#4F9CF9",
-        "YOURUSER/android-companion-mcp:latest"
+        "dangerblack/android-companion:mcp"
       ],
       "enabled": true,
       "timeout": 15000
