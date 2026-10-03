@@ -26,6 +26,10 @@ object CompanionController {
 
     private const val DEFAULT_TTL_MS = 60_000L
 
+    private const val PET_TTL_MS = 4_000L
+
+    private val PET_EMOTIONS = listOf(Emotion.HAPPY, Emotion.LISTENING, Emotion.THINKING, Emotion.SLEEPY)
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     @Volatile
@@ -77,21 +81,24 @@ object CompanionController {
         return state
     }
 
-    suspend fun reset(context: Context) {
+    suspend fun pet(context: Context) {
         val appContext = context.applicationContext
         val current = CompanionStore.current(appContext)
+        val reaction = PET_EMOTIONS.random()
         burst?.cancel()
         FaceAnimBus.current = BloubAnim.REST
         CompanionStore.save(
             appContext,
             current.copy(
-                emotion = Emotion.NEUTRAL,
+                emotion = reaction,
                 text = null,
-                ttlMs = null,
+                ttlMs = PET_TTL_MS,
                 updatedAt = System.currentTimeMillis(),
             ),
         )
         FaceWidget().updateAll(appContext)
+        CompanionWorker.scheduleExpiry(appContext, PET_TTL_MS)
+        launchBurst(appContext)
     }
 
     /*

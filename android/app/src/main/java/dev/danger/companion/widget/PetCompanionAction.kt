@@ -6,12 +6,12 @@ import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
 import dev.danger.companion.push.CompanionController
 
-class ResetCompanionAction : ActionCallback {
+class PetCompanionAction : ActionCallback {
     override suspend fun onAction(
         context: Context,
         glanceId: GlanceId,
         parameters: ActionParameters,
     ) {
-        CompanionController.reset(context.applicationContext)
+        CompanionController.pet(context.applicationContext)
     }
 }

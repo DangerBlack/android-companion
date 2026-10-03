@@ -157,7 +157,8 @@ For plain-HTTP LAN/Tailscale URLs, add the host to
 ## 5. Security checklist
 
 - `NTFY_AUTH_DEFAULT_ACCESS=deny-all`; keep the publish token secret.
+- **Disable the web UI**: `NTFY_WEB_ROOT=disable` — otherwise anyone with the URL can open the UI and browse topics/messages.
+- **Anonymous reads are off by default** (`NTFY_ANON_READ=false`): the Android app must then set a token. Only enable `NTFY_ANON_READ=true` if you accept that anyone who knows the topic can read.
 - Never expose the relay over plain HTTP on a public interface; use Caddy/Tailscale/Cloudflare.
-- Use a long random topic; treat it as a password (anonymous reads rely on it).
-- To also require auth for reads, remove the `everyone` ACL and set the token in the app.
-- Pin image tags (`:0.1.0`) in production rather than `:latest`.
+- Use a long random topic; **rotate it** if it may have leaked. Treat it as a secret.
+- Pin image tags in production rather than `:latest`.

@@ -65,7 +65,7 @@ class FaceWidget : GlanceAppWidget() {
         }
 
         Column(
-            modifier = modifier.clickable(actionRunCallback<ResetCompanionAction>()),
+            modifier = modifier.clickable(actionRunCallback<PetCompanionAction>()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -106,12 +106,12 @@ class FaceWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun FaceImage(state: CompanionState) {        val context = LocalContext.current
+    private fun FaceImage(state: CompanionState) {
+        val context = LocalContext.current
         val size = LocalSize.current
         val density = context.resources.displayMetrics.density
         val widthPx = (size.width.value * density).toInt().coerceAtLeast(48)
-        val heightPx = (size.height.value * density).toInt().coerceAtLeast(48)
-        val bitmap = BloubRenderer.render(state, widthPx, heightPx, FaceAnimBus.current)
+        val bitmap = BloubRenderer.render(state, widthPx, widthPx, FaceAnimBus.current)
         Image(
             provider = BitmapImageProvider(bitmap),
             contentDescription = state.instanceLabel,

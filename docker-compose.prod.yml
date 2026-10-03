@@ -13,6 +13,8 @@ services:
       - NTFY_ATTACHMENT_CACHE_DIR=/var/cache/ntfy/attachments
       - NTFY_AUTH_FILE=/var/lib/ntfy/user.db
       - NTFY_AUTH_DEFAULT_ACCESS=${NTFY_AUTH_DEFAULT_ACCESS:-deny-all}
+      - NTFY_WEB_ROOT=${NTFY_WEB_ROOT:-disable}
+      - NTFY_ANON_READ=${NTFY_ANON_READ:-false}
       - NTFY_USER=${NTFY_USER:-companion}
       - NTFY_PASSWORD=${NTFY_PASSWORD}
       - NTFY_USER_ROLE=${NTFY_USER_ROLE:-admin}

@@ -19,7 +19,9 @@ if [ -n "$NTFY_USER" ] && [ -n "$NTFY_PASSWORD" ]; then
     printf '%s\n%s\n' "$NTFY_PASSWORD" "$NTFY_PASSWORD" | ntfy user add --role="${NTFY_USER_ROLE:-admin}" "$NTFY_USER" || true
     if [ -n "$NTFY_TOPIC" ]; then
       ntfy access "$NTFY_USER" "$NTFY_TOPIC" rw || true
-      ntfy access everyone "$NTFY_TOPIC" ro || true
+      if [ "$NTFY_ANON_READ" = "true" ]; then
+        ntfy access everyone "$NTFY_TOPIC" ro || true
+      fi
     fi
   fi
 fi
