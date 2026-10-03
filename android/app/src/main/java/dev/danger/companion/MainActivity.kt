@@ -16,9 +16,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
@@ -51,6 +54,11 @@ import dev.danger.companion.face.BloubRenderer
 import dev.danger.companion.push.CompanionStreamService
 import dev.danger.companion.widget.FaceWidget
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+private val EVENT_TIME_FORMAT = SimpleDateFormat("HH:mm", Locale.getDefault())
 
 private val BG_OPTIONS = listOf(
     SettingsStore.TRANSPARENT,
@@ -88,6 +96,7 @@ private fun CompanionScreen() {
     val scope = rememberCoroutineScope()
     val state by CompanionStore.flow(context).collectAsState(initial = CompanionState.defaultSleepy())
     val settings by SettingsStore.flow(context).collectAsState(initial = null)
+    val history by HistoryStore.flow(context).collectAsState(initial = emptyList())
 
     var relayInput by remember { mutableStateOf<String?>(null) }
     var topicInput by remember { mutableStateOf<String?>(null) }
@@ -171,6 +180,36 @@ private fun CompanionScreen() {
                 Text(text = "Color: #%06X".format(0xFFFFFF and state.colorArgb))
                 Text(text = "Text: ${state.text ?: "-"}")
                 Text(text = "Updated: ${state.updatedAt}")
+            }
+        }
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Messages",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    OutlinedButton(onClick = { scope.launch { HistoryStore.clear(context) } }) {
+                        Text(text = "Clear")
+                    }
+                }
+                if (history.isEmpty()) {
+                    Text(text = "No messages yet.", style = MaterialTheme.typography.bodySmall)
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .height(320.dp)
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(history) { event -> MessageRow(event) }
+                    }
+                }
             }
         }
 
@@ -291,5 +330,33 @@ private fun CompanionScreen() {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MessageRow(event: CompanionEvent) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = event.emotion.name,
+                style = MaterialTheme.typography.labelLarge,
+            )
+            Text(
+                text = event.text ?: "(no text)",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 8.dp),
+                maxLines = 1,
+            )
+            Text(
+                text = EVENT_TIME_FORMAT.format(Date(event.ts)),
+                style = MaterialTheme.typography.labelMedium,
+            )
+        }
+        Text(
+            text = "${event.instanceLabel} (${event.instanceId})",
+            style = MaterialTheme.typography.bodySmall,
+        )
     }
 }

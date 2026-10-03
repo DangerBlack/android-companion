@@ -3,9 +3,11 @@ package dev.danger.companion.push
 import android.content.Context
 import android.util.Log
 import androidx.glance.appwidget.updateAll
+import dev.danger.companion.CompanionEvent
 import dev.danger.companion.CompanionState
 import dev.danger.companion.CompanionStore
 import dev.danger.companion.Emotion
+import dev.danger.companion.HistoryStore
 import dev.danger.companion.face.BloubAnim
 import dev.danger.companion.face.BloubRenderer
 import dev.danger.companion.face.FaceAnimBus
@@ -46,6 +48,17 @@ object CompanionController {
         burst?.cancel()
         FaceAnimBus.current = BloubAnim.REST
         CompanionStore.save(context, state)
+        HistoryStore.append(
+            context.applicationContext,
+            CompanionEvent(
+                ts = if (state.updatedAt > 0) state.updatedAt else System.currentTimeMillis(),
+                emotion = state.emotion,
+                text = state.text,
+                instanceId = state.instanceId,
+                instanceLabel = state.instanceLabel,
+                colorArgb = state.colorArgb,
+            ),
+        )
         FaceWidget().updateAll(context)
         val ttl = state.ttlMs
         if (ttl != null) {
