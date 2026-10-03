@@ -10,6 +10,7 @@ import dev.danger.companion.face.BloubAnim
 import dev.danger.companion.face.BloubRenderer
 import dev.danger.companion.face.FaceAnimBus
 import dev.danger.companion.widget.FaceWidget
+import dev.danger.companion.widget.TextScrollBus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,10 +31,17 @@ object CompanionController {
 
     private val PET_EMOTIONS = listOf(Emotion.HAPPY, Emotion.LISTENING, Emotion.THINKING, Emotion.SLEEPY)
 
+    private const val SCROLL_LINE_CHARS = 22
+    private const val SCROLL_STEP_MS = 2_000L
+    private const val SCROLL_LOOPS = 3
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     @Volatile
     private var burst: Job? = null
+
+    @Volatile
+    private var scrollJob: Job? = null
 
     suspend fun apply(context: Context, state: CompanionState) {
         burst?.cancel()
@@ -47,6 +55,7 @@ object CompanionController {
             CompanionWorker.cancelExpiry(context.applicationContext)
         }
         launchBurst(context.applicationContext)
+        startScroll(context.applicationContext, state.text)
     }
 
     suspend fun applyJson(context: Context, json: String) {
@@ -83,6 +92,9 @@ object CompanionController {
 
     suspend fun pet(context: Context) {
         val appContext = context.applicationContext
+        scrollJob?.cancel()
+        scrollJob = null
+        TextScrollBus.page.value = null
         val current = CompanionStore.current(appContext)
         val reaction = PET_EMOTIONS.random()
         burst?.cancel()
@@ -99,6 +111,55 @@ object CompanionController {
         FaceWidget().updateAll(appContext)
         CompanionWorker.scheduleExpiry(appContext, PET_TTL_MS)
         launchBurst(appContext)
+    }
+
+    /*
+     * Widgets cannot scroll natively, so a long message is shown one short window
+     * at a time and advanced every SCROLL_STEP_MS, only while that exact message
+     * is still the current state. Any new event replaces the job.
+     */
+    private fun startScroll(context: Context, text: String?) {
+        scrollJob?.cancel()
+        scrollJob = null
+        if (text.isNullOrBlank() || text.length <= SCROLL_LINE_CHARS) {
+            TextScrollBus.page.value = null
+            return
+        }
+        val pages = paginate(text, SCROLL_LINE_CHARS)
+        if (pages.size <= 1) {
+            TextScrollBus.page.value = null
+            return
+        }
+        scrollJob = scope.launch {
+            for (loop in 0 until SCROLL_LOOPS) {
+                for (page in pages) {
+                    if (CompanionStore.current(context).text != text) {
+                        TextScrollBus.page.value = null
+                        return@launch
+                    }
+                    TextScrollBus.page.value = page
+                    FaceWidget().updateAll(context)
+                    delay(SCROLL_STEP_MS)
+                }
+            }
+            TextScrollBus.page.value = null
+            FaceWidget().updateAll(context)
+        }
+    }
+
+    private fun paginate(text: String, maxChars: Int): List<String> {
+        val pages = mutableListOf<String>()
+        val builder = StringBuilder()
+        for (word in text.trim().split(Regex("\\s+"))) {
+            if (builder.isNotEmpty() && builder.length + 1 + word.length > maxChars) {
+                pages += builder.toString()
+                builder.clear()
+            }
+            if (builder.isNotEmpty()) builder.append(' ')
+            builder.append(word)
+        }
+        if (builder.isNotEmpty()) pages += builder.toString()
+        return pages
     }
 
     /*

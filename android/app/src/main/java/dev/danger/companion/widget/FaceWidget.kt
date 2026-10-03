@@ -57,6 +57,8 @@ class FaceWidget : GlanceAppWidget() {
             .collectAsState(initial = CompanionState.defaultSleepy())
         val settings by SettingsStore.flow(context).collectAsState(initial = null)
         val label = state.text?.takeIf { it.isNotBlank() }
+        val scrollPage by TextScrollBus.page.collectAsState()
+        val display = if (label != null) (scrollPage ?: label) else null
         val bgColor = parseBackground(settings?.bgColor)
 
         var modifier = GlanceModifier.fillMaxSize()
@@ -70,7 +72,7 @@ class FaceWidget : GlanceAppWidget() {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = if (label != null) {
+                modifier = if (display != null) {
                     GlanceModifier.defaultWeight().fillMaxWidth()
                 } else {
                     GlanceModifier.fillMaxSize()
@@ -79,9 +81,9 @@ class FaceWidget : GlanceAppWidget() {
             ) {
                 FaceImage(state)
             }
-            if (label != null) {
+            if (display != null) {
                 Text(
-                    text = label,
+                    text = display,
                     modifier = GlanceModifier
                         .fillMaxWidth()
                         .padding(start = 8.dp, end = 8.dp, bottom = 6.dp),
