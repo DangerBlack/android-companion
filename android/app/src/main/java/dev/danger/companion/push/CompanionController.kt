@@ -24,6 +24,8 @@ object CompanionController {
     /** Spacing between burst frames: 7 frames * 100 ms = ~600 ms total. */
     private const val BURST_STEP_MS = 100L
 
+    private const val DEFAULT_TTL_MS = 60_000L
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     @Volatile
@@ -34,6 +36,12 @@ object CompanionController {
         FaceAnimBus.current = BloubAnim.REST
         CompanionStore.save(context, state)
         FaceWidget().updateAll(context)
+        val ttl = state.ttlMs
+        if (ttl != null) {
+            CompanionWorker.scheduleExpiry(context.applicationContext, ttl)
+        } else {
+            CompanionWorker.cancelExpiry(context.applicationContext)
+        }
         launchBurst(context.applicationContext)
     }
 
@@ -51,6 +59,11 @@ object CompanionController {
         color: Int = CompanionState.DEFAULT_COLOR,
         ttlMs: Long? = null,
     ): CompanionState {
+        val effectiveTtl = when {
+            ttlMs == null -> DEFAULT_TTL_MS
+            ttlMs > 0 -> ttlMs
+            else -> null
+        }
         val state = CompanionState(
             emotion = emotion,
             text = text,
@@ -58,10 +71,27 @@ object CompanionController {
             instanceLabel = instanceLabel,
             colorArgb = color,
             updatedAt = System.currentTimeMillis(),
-            ttlMs = ttlMs,
+            ttlMs = effectiveTtl,
         )
         apply(context, state)
         return state
+    }
+
+    suspend fun reset(context: Context) {
+        val appContext = context.applicationContext
+        val current = CompanionStore.current(appContext)
+        burst?.cancel()
+        FaceAnimBus.current = BloubAnim.REST
+        CompanionStore.save(
+            appContext,
+            current.copy(
+                emotion = Emotion.NEUTRAL,
+                text = null,
+                ttlMs = null,
+                updatedAt = System.currentTimeMillis(),
+            ),
+        )
+        FaceWidget().updateAll(appContext)
     }
 
     /*
