@@ -33,7 +33,6 @@ object CompanionController {
 
     private const val SCROLL_LINE_CHARS = 22
     private const val SCROLL_STEP_MS = 2_000L
-    private const val SCROLL_LOOPS = 3
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -131,19 +130,18 @@ object CompanionController {
             return
         }
         scrollJob = scope.launch {
-            for (loop in 0 until SCROLL_LOOPS) {
-                for (page in pages) {
-                    if (CompanionStore.current(context).text != text) {
-                        TextScrollBus.page.value = null
-                        return@launch
-                    }
-                    TextScrollBus.page.value = page
+            var index = 0
+            while (true) {
+                if (CompanionStore.current(context).text != text) {
+                    TextScrollBus.page.value = null
                     FaceWidget().updateAll(context)
-                    delay(SCROLL_STEP_MS)
+                    return@launch
                 }
+                TextScrollBus.page.value = pages[index % pages.size]
+                FaceWidget().updateAll(context)
+                delay(SCROLL_STEP_MS)
+                index++
             }
-            TextScrollBus.page.value = null
-            FaceWidget().updateAll(context)
         }
     }
 
