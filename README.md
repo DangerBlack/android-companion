@@ -45,17 +45,26 @@ Endpoint: `http://localhost:8080` · health: `GET /v1/health`.
 
 ### Authentication (hardening)
 
-With `NTFY_AUTH_DEFAULT_ACCESS=deny-all`, publishing requires a token; reads stay
-anonymous so the app needs no credentials. One-time setup:
+With `NTFY_AUTH_DEFAULT_ACCESS=deny-all`, **both publishing and reading** require a token
+by default, so the Android app must be given a token. One-time setup with **least
+privilege** (write-only user for the publisher, read-only user for the app):
 
 ```bash
-printf '%s\n%s\n' "$PASS" "$PASS" | docker compose exec -T ntfy ntfy user add --role=user companion
-docker compose exec -T ntfy ntfy access companion "$NTFY_TOPIC" rw
-docker compose exec -T ntfy ntfy access everyone   "$NTFY_TOPIC" ro
-docker compose exec -T ntfy ntfy token add companion   # -> tk_...
+P=change-me-strong
+# publisher (MCP): write-only on the topic
+printf '%s\n%s\n' "$P" "$P" | docker compose exec -T ntfy ntfy user add --role=user companion-publisher
+docker compose exec -T ntfy ntfy access companion-publisher "$NTFY_TOPIC" wo
+docker compose exec -T ntfy ntfy token add --label=mcp-publisher companion-publisher
+
+# reader (Android app): read-only on the topic
+printf '%s\n%s\n' "$P" "$P" | docker compose exec -T ntfy ntfy user add --role=user companion-reader
+docker compose exec -T ntfy ntfy access companion-reader "$NTFY_TOPIC" ro
+docker compose exec -T ntfy ntfy token add --label=android-reader companion-reader
 ```
 
-Put the token in `.env` (`NTFY_TOKEN`) and in `opencode.json`.
+Put the publisher token in `.env` (`NTFY_TOKEN`) / the OpenCode env, and the reader token
+in the app. Anonymous read (`everyone ro`) is **off by default** — enable it only if you
+accept that anyone who knows the topic can read.
 
 ## 2. Build the MCP server
 
@@ -171,7 +180,14 @@ For running the relay on a server (with TLS and optional Docker Hub images), see
   The eyes are redrawn to a `Bitmap` with `android.graphics.Canvas` because **Glance has no
   `Canvas`/`drawBehind`**.
 - **TTL**: when set, the face degrades to `neutral` after the duration (no stuck expression).
-- **Test broadcast**: `adb shell am broadcast -a dev.danger.companion.PUSH --es emotion happy --es text "hi"`.
+- **Advanced/long text**: messages longer than the widget width are shown as a ticker
+  (one chunk every 2s, looping until the TTL). Tapping the face triggers a playful
+  reaction and clears the text.
+- **Testing**: publish to the relay (e.g. `cd mcp-server && npm run smoke`, or `curl`).
+  The app's broadcast receiver and stream service are now **not exported** for security,
+  so `adb shell am broadcast` no longer reaches them.
+- **Security**: `allowBackup=false`, the widget token field is masked, and only
+  `MainActivity` + the widget receiver are exported.
 
 ## Credits / third-party
 

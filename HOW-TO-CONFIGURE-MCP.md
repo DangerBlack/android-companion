@@ -223,7 +223,9 @@ Android app maps `instance.color` to the face color and `emotion` to the express
 ## 9. Verify end to end
 
 1. **Relay reachable**: `curl -s http://localhost:8080/v1/health` → `{"healthy":true}`.
-2. **Server publishes** (uses `.env`): `cd mcp-server && npm run smoke` → `status=200`.
+2. **Server publishes**: export the vars first, then `cd mcp-server && npm run smoke` →
+   `status=200`. (The server reads `process.env` only — it does not load `.env`; the
+   OpenCode config sources the env file, or `set -a; . .env; set +a` in the shell.)
 3. **MCP handshake** (stdout must be pure JSON-RPC):
    ```bash
    printf '%s\n' \
@@ -256,10 +258,14 @@ Android app maps `instance.color` to the face color and `emotion` to the express
 
 ## 11. Security notes
 
-- The relay publishes with `deny-all` + a Bearer token; reads are anonymous. Keep the
-  token and topic secret. `.env` and `opencode.json` are git-ignored.
-- If the relay is exposed beyond the LAN, put it behind TLS (reverse proxy / Tailscale)
-  and consider requiring auth for reads too (set the token in the app settings).
+- The relay runs with `deny-all` + a Bearer token: **both publishing and reading require a
+  token by default** (`NTFY_ANON_READ=false`). The Android app is given a read-only token.
+  Keep tokens and the topic secret. `.env` and `opencode.json` are git-ignored.
+- The web UI stays enabled and **requires login** (username/password) under `deny-all`.
+- Prefer least privilege: a write-only user/token for the publisher, a read-only user/token
+  for the app. Tokens are unscoped (they inherit the user's role/ACL), so never issue an
+  `admin` token to the app or the MCP.
+- If the relay is exposed beyond the LAN, put it behind TLS (reverse proxy / Tailscale).
 - Never log the token or post it into chat.
 
 ---

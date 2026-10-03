@@ -1,6 +1,6 @@
 services:
   ntfy:
-    image: binwiederhier/ntfy
+    image: binwiederhier/ntfy:v2.28.0
     container_name: android-companion-ntfy
     command: serve
     environment:
@@ -9,10 +9,9 @@ services:
       - NTFY_LISTEN_HTTP=:80
       - NTFY_CACHE_FILE=/var/cache/ntfy/cache.db
       - NTFY_CACHE_DURATION=${NTFY_CACHE_DURATION:-12h}
-      - NTFY_ATTACHMENT_CACHE_DIR=/var/cache/ntfy/attachments
       - NTFY_BEHIND_PROXY=${NTFY_BEHIND_PROXY:-false}
       - NTFY_AUTH_FILE=/var/lib/ntfy/user.db
-      - NTFY_AUTH_DEFAULT_ACCESS=${NTFY_AUTH_DEFAULT_ACCESS:-read-write}
+      - NTFY_AUTH_DEFAULT_ACCESS=${NTFY_AUTH_DEFAULT_ACCESS:-deny-all}
     volumes:
       - ntfy-cache:/var/cache/ntfy
       - ntfy-auth:/var/lib/ntfy

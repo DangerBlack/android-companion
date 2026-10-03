@@ -121,7 +121,7 @@ class CompanionStreamService : Service() {
         connection = conn
         try {
             val code = conn.responseCode
-            Log.i(TAG, "GET $streamUrl -> HTTP $code")
+            Log.i(TAG, "stream HTTP $code")
             if (code !in 200..299) return
 
             val reader = conn.inputStream.bufferedReader()
